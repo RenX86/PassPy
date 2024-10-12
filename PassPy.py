@@ -13,12 +13,19 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import InvalidKey
 import logging
 
+# ANSI escape codes for colors
+GREEN = '\033[92m'  # Green color for success messages
+BLUE = '\033[94m'   # Blue color for decrypted data
+RED = '\033[91m'    # Red color for error messages
+RESET = '\033[0m'   # Reset to default color
+
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
 # Constants
-DB_FILE = "passwords.db"
-SALT_FILE = "salt.bin"
+DB_FILE = os.path.join(script_dir, "passwords.db")
+SALT_FILE = os.path.join(script_dir, "salt.bin")
 KEY_LENGTH = 32
 ITERATIONS = 100000
 DEFAULT_PASSWORD_LENGTH = 16
@@ -67,7 +74,7 @@ def decrypt(ciphertext, key):
 
         return decrypted.decode()
     except (ValueError, InvalidKey) as e:
-        logging.error(f"Decryption failed: {e}")
+        logging.error(f"{RED}Decryption failed: {e}{RESET}")
         return None
 
 # Key Generation
@@ -84,9 +91,9 @@ def generate_key(master_password, salt):
 
 def get_master_key():
     """Prompt the user for the master password and generate a key."""
-    master_password = input("Enter your master password: ")
+    master_password = input(f"{BLUE}Enter your master password:{RESET}")
     if len(master_password) < 8:
-        logging.warning("Master password is too short! Use at least 8 characters.")
+        logging.warning(f"{RED}Master password is too short! Use at least 8 characters.{RESET}")
         return None
     if not os.path.exists(SALT_FILE):
         salt = os.urandom(16)
@@ -111,9 +118,9 @@ def store_password(site_name, url, username, password, key, salt):
         c.execute("INSERT INTO passwords (site_name, url, username, password, salt) VALUES (?, ?, ?, ?, ?)",
                   (site_name, url, username, encrypted_password, salt))
         conn.commit()
-        logging.info(f"Password for {site_name} stored successfully.")
+        logging.info(f"{GREEN}Password for {site_name} stored successfully.{RESET}")
     except sqlite3.Error as e:
-        logging.error(f"Error storing password: {e}")
+        logging.error(f"{RED}Error storing password: {e}{RESET}")
     finally:
         conn.close()
 
@@ -125,23 +132,23 @@ def retrieve_passwords_by_keyword(keyword, key):
         c.execute("SELECT site_name, url, username, password FROM passwords WHERE site_name LIKE ?", ('%' + keyword + '%',))
         rows = c.fetchall()
     except sqlite3.Error as e:
-        logging.error(f"Error retrieving passwords: {e}")
+        logging.error(f"{RED}Error retrieving passwords: {e}{RESET}")
         return
     finally:
         conn.close()
 
     if rows:
-        logging.info(f"\nResults for site keyword '{keyword}':")
+        logging.info(f"{GREEN}\nResults for site keyword '{keyword}':{RESET}")
         for row in rows:
             site_name, url, username, encrypted_password = row
             password = decrypt(encrypted_password, key)
             if password:
-                print(f"Site Name: {site_name}\nURL: {url}\nUsername: {username}\nPassword: {password}")
-                print("-" * 30)
+                print(f"{BLUE}Site Name: {site_name}\nURL: {url}\nUsername: {username}\nPassword: {password}{RESET}")
+                print("=" * 50)
             else:
-                logging.warning(f"Failed to decrypt password for {site_name}.")
+                logging.warning(f"{RED}Failed to decrypt password for {site_name}.{RESET}")
     else:
-        logging.info(f"No results found for the site keyword '{keyword}'.")
+        logging.info(f"{RED}No results found for the site keyword '{keyword}'.{RESET}")
 
 # CSV Import
 def import_passwords_from_csv(file_path, key, salt):
@@ -160,7 +167,7 @@ def import_passwords_from_csv(file_path, key, salt):
                 store_password(site_name, url, username, password, key, salt)  # Ensure salt is passed here
                 logging.info(f"Imported {site_name} with username {username} successfully.")
     except FileNotFoundError as e:
-        logging.error(f"File not found: {file_path}")
+        logging.error(f"{RED}File not found: {file_path}{RESET}")
 
 
 # Password Generation
@@ -180,7 +187,7 @@ def handle_store_password(key, salt):
 
 def handle_retrieve_password(key):
     """Handle retrieving passwords."""
-    keyword = input("Enter site keyword to search: ")
+    keyword = input(f"{BLUE}Enter site keyword to search:{RESET}")
     retrieve_passwords_by_keyword(keyword, key)  # Only pass key here, no need for salt
 
 def handle_generate_password():
@@ -206,26 +213,42 @@ def main():
 
     while True:
         print("\nOptions:")
-        print("1. Store a new password")
-        print("2. Retrieve a password")
-        print("3. Generate a strong password")
-        print("4. Import passwords from CSV")
-        print("5. Quit")
+        print(f"{BLUE}1. Store a new password{RESET}")
+        print(f"{BLUE}2. Retrieve a password{RESET}")
+        print(f"{BLUE}3. Generate a strong password{RESET}")
+        print(f"{BLUE}4. Import passwords from CSV{RESET}")
+        print(f"{BLUE}5. Quit{RESET}")
 
         choice = input("Choose an option: ")
         if choice == "1":
-            handle_store_password(key, salt)
+            while True:    
+                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
+                if continue_choice.lower() == "ext":
+                    break
+                handle_store_password(key, salt)
         elif choice == "2":
-            handle_retrieve_password(key)
+            while True:    
+                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
+                if continue_choice.lower() == "ext":
+                    break
+                handle_retrieve_password(key)
         elif choice == "3":
-            handle_generate_password()
+            while True:    
+                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
+                if continue_choice.lower() == "ext":
+                    break
+                handle_generate_password()
         elif choice == "4":
-            handle_import_passwords(key, salt)
+            while True:    
+                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
+                if continue_choice.lower() == "ext":
+                    break
+                handle_import_passwords(key, salt)
         elif choice == "5":
             logging.info("Goodbye!")
             break
         else:
-            logging.warning("Invalid option. Please choose again.")
+            logging.warning(f"{RED}Invalid option. Please choose again.{RESET}")
 
 if __name__ == "__main__":
     main()
