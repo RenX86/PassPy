@@ -178,28 +178,62 @@ def generate_password(length=DEFAULT_PASSWORD_LENGTH):
 
 # Menu Helpers
 def handle_store_password(key, salt):
-    """Handle storing a new password."""
-    site_name = input("Enter site name: ")
-    url = input("Enter URL: ")
-    username = input("Enter username: ")
-    password = getpass("Enter password: ")
-    store_password(site_name, url, username, password, key, salt)
+    """Handle storing a new password with 'ext' option to return to the main menu."""
+    while True:
+        site_name = input("Enter site name (or type 'ext' to return to the main menu): ")
+        if site_name.lower() == 'ext':
+            break
+
+        url = input("Enter URL (or type 'ext' to return to the main menu): ")
+        if url.lower() == 'ext':
+            break
+
+        username = input("Enter username (or type 'ext' to return to the main menu): ")
+        if username.lower() == 'ext':
+            break
+
+        password = getpass("Enter password (or type 'ext' to return to the main menu): ")
+        if password.lower() == 'ext':
+            break
+
+        store_password(site_name, url, username, password, key, salt)
+        break  # After storing the password, return to the main menu.
 
 def handle_retrieve_password(key):
-    """Handle retrieving passwords."""
-    keyword = input(f"{BLUE}Enter site keyword to search:{RESET}")
-    retrieve_passwords_by_keyword(keyword, key)  # Only pass key here, no need for salt
+    """Handle retrieving passwords with 'ext' option."""
+    while True:
+        keyword = input(f"Enter site keyword to search (or type 'ext' to return to the main menu): ")
+        if keyword.lower() == 'ext':
+            break
+
+        retrieve_passwords_by_keyword(keyword, key)
+        break
 
 def handle_generate_password():
-    """Handle generating a new password."""
-    length = int(input(f"Enter the password length (default {DEFAULT_PASSWORD_LENGTH}): ") or DEFAULT_PASSWORD_LENGTH)
-    password = generate_password(length)
-    print(f"Generated password: {password}")
+    """Handle generating a password with 'ext' option."""
+    while True:
+        length = input(f"Enter the password length (default {DEFAULT_PASSWORD_LENGTH}, or type 'ext' to return to the main menu): ")
+        if length.lower() == 'ext':
+            break
+
+        if length.isdigit():
+            length = int(length)
+        else:
+            length = DEFAULT_PASSWORD_LENGTH
+        
+        password = generate_password(length)
+        print(f"Generated password: {password}")
+        break
 
 def handle_import_passwords(key, salt):
-    """Handle importing passwords from CSV."""
-    file_path = input("Enter the CSV file path: ")
-    import_passwords_from_csv(file_path, key, salt)
+    """Handle importing passwords from CSV with 'ext' option."""
+    while True:
+        file_path = input("Enter the CSV file path (or type 'ext' to return to the main menu): ")
+        if file_path.lower() == 'ext':
+            break
+
+        import_passwords_from_csv(file_path, key, salt)
+        break
 
 # Main Program
 def main():
@@ -221,29 +255,13 @@ def main():
 
         choice = input("Choose an option: ")
         if choice == "1":
-            while True:    
-                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
-                if continue_choice.lower() == "ext":
-                    break
-                handle_store_password(key, salt)
+            handle_store_password(key, salt)  # Allow the user to return from the input process
         elif choice == "2":
-            while True:    
-                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
-                if continue_choice.lower() == "ext":
-                    break
-                handle_retrieve_password(key)
+            handle_retrieve_password(key)
         elif choice == "3":
-            while True:    
-                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
-                if continue_choice.lower() == "ext":
-                    break
-                handle_generate_password()
+            handle_generate_password()
         elif choice == "4":
-            while True:    
-                continue_choice = input("Type 'ext' to return to main menu or press Enter to continue: ")
-                if continue_choice.lower() == "ext":
-                    break
-                handle_import_passwords(key, salt)
+            handle_import_passwords(key, salt)
         elif choice == "5":
             logging.info("Goodbye!")
             break
